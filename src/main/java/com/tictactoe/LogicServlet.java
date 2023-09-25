@@ -1,5 +1,8 @@
 package com.tictactoe;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -12,8 +15,11 @@ import java.util.List;
 
 @WebServlet(name = "LogicServlet", value = "/logic")
 public class LogicServlet extends HttpServlet {
+
+    private static final Logger logger = LoggerFactory.getLogger(LogicServlet.class);
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        logger.info("doGet method of LogicServlet");
         HttpSession currentSession = req.getSession();
 
         Field field = extractField(currentSession);
@@ -24,21 +30,26 @@ public class LogicServlet extends HttpServlet {
         if(Sign.EMPTY != currentSign) {
             RequestDispatcher dispatcher = getServletContext().getNamedDispatcher("/index.jsp");
             dispatcher.forward(req, resp);
+            logger.info("currentSign == Sign.EMPTY");
             return;
         }
 
         field.getField().put(index, Sign.CROSS);
         if (checkWin(resp, currentSession, field)) {
+            logger.info("check winner");
             return;
         }
 
         int emptyFieldIndex = field.getEmptyFieldIndex();
         if (emptyFieldIndex >= 0) {
+            logger.info("emptyFieldIndex >= 0, emptyFieldIndex: {}", emptyFieldIndex);
             field.getField().put(emptyFieldIndex, Sign.NOUGHT);
             if (checkWin(resp, currentSession, field)) {
+                logger.info("check winner");
                 return;
             }
         } else {
+            logger.info("emptyFieldIndex < 0, emptyFieldIndex: {}", emptyFieldIndex);
             currentSession.setAttribute("draw", true);
             List<Sign> data = field.getFieldData();
             currentSession.setAttribute("data", data);
@@ -56,6 +67,7 @@ public class LogicServlet extends HttpServlet {
     private Field extractField(HttpSession currentSession) {
         Object fieldAttribute = currentSession.getAttribute("field");
         if (Field.class != fieldAttribute.getClass()) {
+            logger.error("fieldAttribute is not Field class, invalidate session");
             currentSession.invalidate();
             throw new RuntimeException("Session is broken, try one more time");
         }
@@ -65,6 +77,7 @@ public class LogicServlet extends HttpServlet {
     private int getSelectedIndex(HttpServletRequest req) {
         String click = String.valueOf(req.getParameter("click"));
         boolean isNumeric = click.chars().allMatch(Character::isDigit);
+        logger.info("isNumeric : {}", isNumeric);
         return isNumeric ? Integer.parseInt(click) : 0;
     }
 
@@ -75,8 +88,10 @@ public class LogicServlet extends HttpServlet {
             List<Sign> data = field.getFieldData();
             currentSession.setAttribute("data", data);
             response.sendRedirect("/index.jsp");
+            logger.info("winner is {}", winner.getSign());
             return true;
         }
+        logger.info("not yet winner");
         return false;
     }
 }
