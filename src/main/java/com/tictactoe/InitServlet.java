@@ -25,7 +25,5 @@ public class InitServlet extends HttpServlet {
         currentSession.setAttribute("data", data);
 
         getServletContext().getRequestDispatcher("/index.jsp").forward(req, resp);
-
-        super.doGet(req, resp);
     }
 }
